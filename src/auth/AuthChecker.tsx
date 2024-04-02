@@ -22,7 +22,7 @@ const AuthChecker  =  ({ children  }:  Props )  => {
         }
     }, [isLoading, isAuthenticated, navigate ]);
     return (
-        <>( children )</>
+        <>{ children }</>
     );
 };
 export default AuthChecker;

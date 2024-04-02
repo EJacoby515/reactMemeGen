@@ -1,51 +1,68 @@
-import Button from "./Button";
+import React, { useState } from 'react';
 import Input from './Input';
-import { useForm } from "react-hook-form";
-import { server_calls } from "../api/server";
-import { useDispatch } from "react-redux";
-import { chooseFilename } from "../redux/slices/RootSlices";
+import Button from './Button';
+import { useForm, SubmitHandler } from 'react-hook-form';
+import MemeService from '../api/service';
 
 interface MemeFormProps {
   onClose: () => void;
+  onImageUpload: () => void;
 }
 
-const MemeForm = (props: MemeFormProps) => {
-  const { register, handleSubmit } = useForm({});
-  const dispatch = useDispatch();
+const MemeForm: React.FC<MemeFormProps> = ({ onClose, onImageUpload }) => {
+  const { register, handleSubmit, setValue } = useForm();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const onSubmit = async (data: any, event: any) => {
-    // Hardcoded user_id
-    const user_id = '7d9545b3-1980-4bd7-b37d-a5e40341c705';
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      const file = event.target.files[0];
+      setSelectedFile(file);
+      setValue('filename', file.name);
+    }
+  };
 
-    // Dispatch action to choose filename
-    dispatch(chooseFilename(data.filename));
-
-    const formData = new FormData();
-      formData.append('filename', data.filename);
-      formData.append('user_id', user_id);
-      formData.append('file',data.file[0]);
-      console.log(formData);
-    await server_calls.createWithFormData(formData);
-
-    // Reset the form
-    event.target.reset();
-
-    // Close the form
-    props.onClose();
-  }
+  const onSubmit: SubmitHandler<any> = async (data) => {
+	try {
+	  if (selectedFile) {
+		const user_id = '7d9545b3-1980-4bd7-b37d-a5e40341c705';
+		await MemeService.uploadImage(selectedFile, data.filename, user_id);
+		console.log('Image uploaded successfully!');
+		onImageUpload();
+	  } else {
+		console.log('No image selected.');
+	  }
+	  onClose();
+	} catch (error) {
+	  console.log('Error creating data:', error);
+	}
+  };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <div>
         <label htmlFor="filename">Filename</label>
-        <Input {...register('filename')} name='filename' placeholder='Filename' />
+        <Input
+          {...register('filename', { required: true })}
+          name="filename"
+          placeholder="Filename"
+        />
       </div>
       <div>
         <label htmlFor="file">File</label>
-        <input type="file" {...register('file')} name='file' />
+        <input
+          type="file"
+          {...register('file', { required: true })}
+          onChange={handleFileChange}
+          name="file"
+          accept="image/*"
+          required
+        />
       </div>
       <div className="flex p-1">
-        <Button className="flex justify-start m-3 bg-slate-300 p-2 rounded  hover:bg-slate-800 text-white">
+        <Button
+          className="flex justify-start m-3 bg-slate-300 p-2 rounded hover:bg-slate-800 text-white"
+          type="submit"
+        >
           Submit
         </Button>
       </div>

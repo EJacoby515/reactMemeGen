@@ -1,76 +1,164 @@
+import { useState, useEffect } from 'react';
 import MemeTable from '../components/MemeTable';
+import ImageGallery from '../components/ImageGallery';
+import { server_calls } from '../api/server';
+import distractedbf from '../assets/images/Distracted-Boyfriend.jpeg'
+import hotlineBling from '../assets/images/Drake-Hotline-Bling.jpeg'
+import exitRamp from '../assets/images/Left-Exit-12-Off-Ramp.jpeg'
+import simply from '../assets/images/One-Does-Not-Simply.jpeg'
+import Pooh from '../assets/images/Tuxedo-Winnie-The-Pooh.jpeg'
+import Buttons from '../assets/images/Two-Buttons.jpeg'
+import faceOne from '../assets/images/istockphoto-538665020-612x612.jpeg'
+import Note from '../assets/images/passnote.jpeg'
+import spongeBob from '../assets//images/spongebob.jpeg'
+import Mcmahon from '../assets/images/vincemcmahon.jpeg'
+import faceTwo from '../assets/images/face.jpeg'
+import Stonks from '../assets/images/stonks.jpeg'
 
-const itemData = [
+interface CustomImageData {
+  id: string;
+  img: string;
+  title: string;
+}
+
+const staticImageData: CustomImageData[] = [
   {
-    img: 'https://images.unsplash.com/photo-1549388604-817d15aa0110',
-    title: 'Bed',
+    id: '1',
+    img: distractedbf,
+    title: 'distracted bf',
   },
   {
-    img: 'https://images.unsplash.com/photo-1563298723-dcfebaa392e3',
-    title: 'Kitchen',
+    id: '2',
+    img: hotlineBling,
+    title: 'Hotline Bling',
   },
   {
-    img: 'https://images.unsplash.com/photo-1523413651479-597eb2da0ad6',
-    title: 'Sink',
+    id: '3',
+    img: exitRamp,
+    title: 'Left Exit',
   },
   {
-    img: 'https://images.unsplash.com/photo-1525097487452-6278ff080c31',
-    title: 'Books',
+    id: '4',
+    img: simply,
+    title: 'Dont Simply',
   },
   {
-    img: 'https://images.unsplash.com/photo-1574180045827-681f8a1a9622',
-    title: 'Chairs',
+    id: '5',
+    img: Pooh,
+    title: 'Winnie the Pooh',
   },
   {
-    img: 'https://images.unsplash.com/photo-1597262975002-c5c3b14bbd62',
-    title: 'Candle',
+    id: '6',
+    img: Buttons,
+    title: 'Two Buttons',
   },
   {
-    img: 'https://images.unsplash.com/photo-1530731141654-5993c3016c77',
-    title: 'Laptop',
+    id: '7',
+    img: faceOne,
+    title: 'Weird Face',
   },
   {
-    img: 'https://images.unsplash.com/photo-1481277542470-605612bd2d61',
-    title: 'Doors',
+    id: '8',
+    img: Note,
+    title: 'Pass Note',
   },
   {
-    img: 'https://images.unsplash.com/photo-1517487881594-2787fef5ebf7',
-    title: 'Coffee',
+    id: '9',
+    img: spongeBob,
+    title: 'Sponge Bob',
   },
   {
-    img: 'https://images.unsplash.com/photo-1516455207990-7a41ce80f7ee',
-    title: 'Storage',
+    id: '10',
+    img: Mcmahon,
+    title: 'Vince Mcmoahon',
   },
   {
-    img: 'https://images.unsplash.com/photo-1519710164239-da123dc03ef4',
-    title: 'Coffee table',
+    id: '11',
+    img: faceTwo,
+    title: 'Face',
   },
   {
-    img: 'https://images.unsplash.com/photo-1588436706487-9d55d73a39e3',
-    title: 'Blinds',
-  },
+    id: '12',
+    img: Stonks,
+    title: 'Stonks',
+  }
 ];
 
 function Meme() {
+  const [selectedImage, setSelectedImage] = useState<number | null>(null);
+  const [uploadedImageData, setUploadedImageData] = useState<CustomImageData[]>([]);
+
+  useEffect(() => {
+    fetchUploadedImageData();
+  }, []);
+
+  const fetchUploadedImageData = async () => {
+    try {
+      const result = await server_calls.get();
+      if (result.images && Array.isArray(result.images)) {
+        const uploadedImages = result.images.map((image: any) => ({
+          id: image.id,
+          title: image.filename,
+          img: `data:image/jpeg;base64,${image.data}`,
+        }));
+        setUploadedImageData(uploadedImages);
+      } else {
+        console.log('Invalid response data:', result);
+        setUploadedImageData([]);
+      }
+    } catch (error) {
+      console.log('Error fetching uploaded image data:', error);
+      setUploadedImageData([]);
+    }
+  };
+
+  const handleImageClick = (index: number) => {
+    setSelectedImage(selectedImage === index ? null : index);
+  };
+
+  const handleImageUpload = () => {
+    fetchUploadedImageData();
+  };
+
+  const handleUpdate = async (imageId: string, updatedData: any) => {
+    try {
+      console.log('updating image with data:', updatedData);
+      const result = await server_calls.update(imageId, updatedData);
+      console.log('Image updated successfully:', result);
+      fetchUploadedImageData();
+    } catch (error) {
+      console.log('Error updating image:', error);
+    }
+  };
+
+  const handleDelete = async (imageId: string) => {
+    try {
+      const result = await server_calls.delete(imageId);
+      console.log('Image deleted successfully:', result);
+      fetchUploadedImageData();
+    } catch (error) {
+      console.log('Error deleting image:', error);
+    }
+  };
+
   return (
-    <>
-      <div style={{ maxWidth: '600px', margin: '0 auto', padding: '20px' }}>
-        <MemeTable />
-        <div className='grid grid-cols-3 gap-4 justify-items-center'>
-          {itemData.map((item, index) => (
-            <div key={index} onClick={() => console.log('/')}>
-              <img
-                src={item.img}
-                alt={item.title}
-                loading="lazy"
-                style={{ width: '100%', height: 'auto' }}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-    </>
+    <div className="max-w-6xl mx-auto px-4 py-8 z-40">
+       <MemeTable
+      selectedImage={selectedImage}
+      imageData={[...staticImageData, ...uploadedImageData]}
+      onImageUpload={handleImageUpload}
+      onUpdate={handleUpdate}
+      onDelete={handleDelete}
+    />
+      <ImageGallery
+        selectedImage={selectedImage}
+        onImageClick={handleImageClick}
+        staticImageData={staticImageData}
+        uploadedImageData={uploadedImageData}
+      />
+    </div>
   );
 }
 
 export default Meme;
+
